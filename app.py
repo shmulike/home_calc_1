@@ -101,7 +101,7 @@ with col_inputs:
     net_monthly_after_rent = mortgage_payment - monthly_rent
 
     st.info(
-        f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ₪   ‎\n<br>"
+        f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ₪   ‎ .\n"
         f"**Net Monthly (payment − rent):** {net_monthly_after_rent:,.0f} ₪"
     )
 
