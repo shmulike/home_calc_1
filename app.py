@@ -102,7 +102,7 @@ with col_inputs:
 
     st.info(
         f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS\n"
-        f"**Net Monthly (payment − rent):** {net_monthly_after_rent:,.0f} ILS"
+        f"**Net Monthly (payment − rent):** {net_monthly_after_rent:,.0f} ₪ILSS"
     )
 
     # ---------------------
