@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 graph_col_width = 8         # Controls ratio of graph column vs input column
 plot_width = 8              # Width of the matplotlib figure
 plot_height = 6             # Height of the matplotlib figure
-legend_fontsize = 10        # Font size for legend
+legend_fontsize = 6         # Font size for legend
 axis_label_fontsize = 12    # Font size for axis labels
-axis_tick_fontsize = 10     # Font size for axis tick values
+axis_tick_fontsize = 6      # Font size for axis tick values
 
 st.set_page_config(page_title="Real Estate vs Investment Simulator", layout="wide")
 st.title("Real Estate & Investment Comparison Simulator")
