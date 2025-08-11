@@ -63,7 +63,24 @@ with col_inputs:
         "Mortgage Annual Rate (%)",
         min_value=0.0, value=4.00, step=0.10, format="%.2f", key="mortgage_rate_pct"
     )
-    
+
+    # >>> Mortgage calculation shown here (right after Mortgage inputs) <<<
+    n_pay = int(mortgage_years) * 12
+    r_m = (mortgage_rate_pct / 100.0) / 12.0
+    if mortgage_amount > 0 and n_pay > 0:
+        if r_m > 0:
+            mortgage_payment = mortgage_amount * (r_m * (1 + r_m) ** n_pay) / ((1 + r_m) ** n_pay - 1)
+        else:
+            mortgage_payment = mortgage_amount / n_pay
+    else:
+        mortgage_payment = 0.0
+    net_monthly_after_rent = mortgage_payment - monthly_rent
+
+    st.info(
+        f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS  |  "
+        f"**Net Monthly (payment − rent):** {net_monthly_after_rent:,.0f} ILS"
+    )
+
     # ---------------------
     # Stock Market
     # ---------------------
@@ -82,54 +99,58 @@ with col_inputs:
     )
 
 # =========================
-# CALCULATIONS
+# CALCULATIONS (vectorized so the lines always span full horizon)
 # =========================
 months = int(years_projection) * 12
+idx_m = np.arange(months + 1)           # 0..months
+years_axis = idx_m / 12.0
+
 re_growth = re_growth_pct / 100.0
 stock_return = stock_return_pct / 100.0
 
-# Mortgage monthly payment (standard annuity)
-monthly_rate = (mortgage_rate_pct / 100.0) / 12.0
-n_pay = int(mortgage_years) * 12
-if mortgage_amount > 0 and monthly_rate > 0 and n_pay > 0:
-    mortgage_payment = mortgage_amount * (monthly_rate * (1 + monthly_rate) ** n_pay) / ((1 + monthly_rate) ** n_pay - 1)
-elif mortgage_amount > 0 and monthly_rate == 0 and n_pay > 0:
-    mortgage_payment = mortgage_amount / n_pay
-else:
-    mortgage_payment = 0.0
+# --- Scenario 1: Apartment value over time (monthly compounding) ---
+apt_series_s1 = apt_value * (1.0 + re_growth / 12.0) ** idx_m  # shape (months+1,)
 
-net_monthly_after_rent = mortgage_payment - monthly_rent  # info only (doesn't change amortization)
+# --- Scenario 1: Mortgage remaining balance series ---
+def mortgage_balance_series(P, annual_rate_pct, years_term, months_horizon):
+    """Vectorized remaining balance B_k for k=0..months_horizon."""
+    n = int(years_term) * 12
+    r = (annual_rate_pct / 100.0) / 12.0
+    k = np.arange(months_horizon + 1)
 
-# --- Scenario 1: Keep apartment, rent, pay mortgage ---
-apt_series_s1 = np.zeros(months + 1)
-debt_series_s1 = np.zeros(months + 1)
+    if P <= 0 or n <= 0:
+        return np.zeros_like(k, dtype=float)
 
-# apartment value growth
-apt_val = float(apt_value)
-for m in range(months + 1):
-    apt_series_s1[m] = apt_val
-    apt_val *= (1 + re_growth / 12.0)
+    if r == 0:
+        # Linear paydown to zero by month n, then stay at 0
+        B = P * (1 - np.minimum(k, n) / n)
+        B[k > n] = 0.0
+        return B
 
-# mortgage amortization (no extra principal by default)
-debt = float(mortgage_amount)
-for m in range(months + 1):
-    debt_series_s1[m] = max(0.0, debt)
-    interest_part = debt * monthly_rate
-    principal_part = mortgage_payment - interest_part
-    principal_part = max(0.0, principal_part)
-    debt = max(0.0, debt - principal_part)
+    # Payment
+    M = P * (r * (1 + r) ** n) / ((1 + r) ** n - 1)
+    # Remaining balance formula
+    B = P * (1 + r) ** np.minimum(k, n) - M * (((1 + r) ** np.minimum(k, n) - 1) / r)
+    B[k > n] = 0.0
+    # Numerical cleanup
+    B = np.maximum(0.0, B)
+    return B
 
-# --- Scenario 2: Sell and invest in stock market (no apartment) ---
-equity_series_s2 = np.zeros(months + 1)
-amt = float(initial_deposit)
-equity_series_s2[0] = amt
-for m in range(1, months + 1):
-    amt = amt * (1 + stock_return / 12.0) + monthly_deposit
-    equity_series_s2[m] = amt
+debt_series_s1 = mortgage_balance_series(mortgage_amount, mortgage_rate_pct, mortgage_years, months)
 
-years_axis = np.arange(months + 1) / 12.0
+# --- Scenario 2: Equity portfolio series ---
+def equity_series(initial_lump, monthly_contrib, annual_return_pct, months_horizon):
+    """FV series: initial*(1+r)^k + contrib*(( (1+r)^k -1)/r ), vectorized for k=0..months."""
+    r = (annual_return_pct / 100.0) / 12.0
+    k = np.arange(months_horizon + 1)
+    if r == 0:
+        return initial_lump + monthly_contrib * k
+    growth = (1 + r) ** k
+    return initial_lump * growth + monthly_contrib * (growth - 1) / r
 
-# Shared Y max (in ILS)
+equity_series_s2 = equity_series(initial_deposit, monthly_deposit, stock_return_pct, months)
+
+# Shared Y max (in ILS) — ensure full-range plotting
 y_max = max(np.max(apt_series_s1), np.max(debt_series_s1), np.max(equity_series_s2))
 y_max = 1.05 * y_max if y_max > 0 else 1.0
 
@@ -153,8 +174,8 @@ with col_graph:
     ax.grid(True)
     ax.legend(fontsize=legend_fontsize)
 
-    # Ticks (years)
-    ax.set_xticks(np.arange(0, months + 1, 12))
+    # Year ticks from 0..years_projection inclusive
+    ax.set_xticks(np.arange(0, years_projection + 1, 1))
     ax.set_xticklabels([str(y) for y in range(0, years_projection + 1)], fontsize=axis_tick_fontsize)
     ax.tick_params(axis='y', labelsize=axis_tick_fontsize)
 
@@ -166,5 +187,5 @@ with col_graph:
 with col_inputs:
     st.markdown("---")
     st.markdown(f"**Mortgage Amount:** {mortgage_amount:,.0f} ILS")
-    st.markdown(f"**Monthly Mortgage Payment (no extra principal):** {mortgage_payment:,.0f} ILS")
-    st.markdown(f"**Net Monthly Payment after Rent (payment − rent):** {net_monthly_after_rent:,.0f} ILS")
+    st.markdown(f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS")
+    st.markdown(f"**Net Monthly Payment (payment − rent):** {net_monthly_after_rent:,.0f} ILS")
