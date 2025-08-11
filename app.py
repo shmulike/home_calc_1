@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # -----------------------------
 # SETTINGS
 # -----------------------------
-graph_width = 4  # Change this to make the graph wider/narrower
+graph_width = 8  # Change this to make the graph wider/narrower
 
 st.set_page_config(page_title="Real Estate vs Investment Simulator", layout="wide")
 st.title("Real Estate & Investment Comparison Simulator")
