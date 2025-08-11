@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 graph_col_width       = 7   # left column width (graph). Right column gets the rest (out of 10)
 plot_width            = 9   # matplotlib figure width
 plot_height           = 4   # matplotlib figure height
-legend_fontsize       = 8  # legend font size
-axis_label_fontsize   = 8  # axis labels & title font size
-axis_tick_fontsize    = 8  # axis tick numbers font size
+legend_fontsize       = 8   # legend font size
+axis_label_fontsize   = 8   # axis labels & title font size
+axis_tick_fontsize    = 8   # axis tick numbers font size
 
 st.set_page_config(page_title="Keep vs Sell: Apartment vs Stocks", layout="wide")
 st.title("Keep the Apartment & Pay Mortgage vs Sell and Invest")
@@ -29,6 +29,7 @@ with col_inputs:
         "Projection Years",
         min_value=1, value=20, step=1, key="years_projection"
     )
+    years_projection = int(years_projection)  # // tweak: ensure int for ticks
 
     # ---------------------
     # Property Parameters
@@ -59,13 +60,14 @@ with col_inputs:
         "Mortgage Years",
         min_value=1, value=15, step=1, key="mortgage_years"
     )
+    mortgage_years = int(mortgage_years)  # // tweak: ensure int
     mortgage_rate_pct = st.number_input(
         "Mortgage Annual Rate (%)",
         min_value=0.0, value=5.50, step=0.10, format="%.2f", key="mortgage_rate_pct"
     )
 
     # >>> Mortgage calculation shown here (right after Mortgage inputs) <<<
-    n_pay = int(mortgage_years) * 12
+    n_pay = mortgage_years * 12
     r_m = (mortgage_rate_pct / 100.0) / 12.0
     if mortgage_amount > 0 and n_pay > 0:
         if r_m > 0:
@@ -74,6 +76,7 @@ with col_inputs:
             mortgage_payment = mortgage_amount / n_pay
     else:
         mortgage_payment = 0.0
+
     net_monthly_after_rent = mortgage_payment - monthly_rent
 
     st.info(
@@ -101,7 +104,7 @@ with col_inputs:
 # =========================
 # CALCULATIONS (vectorized so the lines always span full horizon)
 # =========================
-months = int(years_projection) * 12
+months = years_projection * 12
 idx_m = np.arange(months + 1)           # 0..months
 years_axis = idx_m / 12.0
 
@@ -121,16 +124,17 @@ def mortgage_balance_series(P, annual_rate_pct, years_term, months_horizon):
     if P <= 0 or n <= 0:
         return np.zeros_like(k, dtype=float)
 
+    m = np.minimum(k, n)  # // tweak: reuse min(k, n)
     if r == 0:
         # Linear paydown to zero by month n, then stay at 0
-        B = P * (1 - np.minimum(k, n) / n)
+        B = P * (1 - m / n)
         B[k > n] = 0.0
         return B
 
     # Payment
     M = P * (r * (1 + r) ** n) / ((1 + r) ** n - 1)
     # Remaining balance formula
-    B = P * (1 + r) ** np.minimum(k, n) - M * (((1 + r) ** np.minimum(k, n) - 1) / r)
+    B = P * (1 + r) ** m - M * (((1 + r) ** m - 1) / r)
     B[k > n] = 0.0
     # Numerical cleanup
     B = np.maximum(0.0, B)
