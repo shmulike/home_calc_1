@@ -223,14 +223,3 @@ with col_inputs:
     st.markdown(f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS")
     st.markdown(f"**Net Monthly Payment (payment − rent):** {net_monthly_after_rent:,.0f} ILS")
 
-# =========================
-# INFO BOXES (right)
-# =========================
-with col_inputs:
-    st.markdown("---")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown(f"**Mortgage Amount:** {mortgage_amount:,.0f} ILS")
-        st.markdown(f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS")
-    with c2:
-        st.markdown(f"**Net Monthly Payment (payment − rent):** {net_monthly_after_rent:,.0f} ILS")
