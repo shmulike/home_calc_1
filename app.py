@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 # =========================
 graph_col_width       = 7   # left column width (graph). Right column gets the rest (out of 10)
 plot_width            = 9   # matplotlib figure width
-plot_height           = 6   # matplotlib figure height
-legend_fontsize       = 11  # legend font size
-axis_label_fontsize   = 12  # axis labels & title font size
-axis_tick_fontsize    = 10  # axis tick numbers font size
+plot_height           = 4   # matplotlib figure height
+legend_fontsize       = 8  # legend font size
+axis_label_fontsize   = 8  # axis labels & title font size
+axis_tick_fontsize    = 8  # axis tick numbers font size
 
 st.set_page_config(page_title="Keep vs Sell: Apartment vs Stocks", layout="wide")
 st.title("Keep the Apartment & Pay Mortgage vs Sell and Invest")
@@ -27,7 +27,7 @@ with col_inputs:
     st.header("General")
     years_projection = st.number_input(
         "Projection Years",
-        min_value=1, value=15, step=1, key="years_projection"
+        min_value=1, value=20, step=1, key="years_projection"
     )
 
     # ---------------------
@@ -44,7 +44,7 @@ with col_inputs:
     )
     monthly_rent = st.number_input(
         "Monthly Rent income (ILS)",
-        min_value=0.0, value=4_500.0, step=100.0, format="%.0f", key="monthly_rent"
+        min_value=0.0, value=4_000.0, step=100.0, format="%.0f", key="monthly_rent"
     )
 
     # ---------------------
@@ -57,11 +57,11 @@ with col_inputs:
     )
     mortgage_years = st.number_input(
         "Mortgage Years",
-        min_value=1, value=25, step=1, key="mortgage_years"
+        min_value=1, value=15, step=1, key="mortgage_years"
     )
     mortgage_rate_pct = st.number_input(
         "Mortgage Annual Rate (%)",
-        min_value=0.0, value=4.00, step=0.10, format="%.2f", key="mortgage_rate_pct"
+        min_value=0.0, value=5.50, step=0.10, format="%.2f", key="mortgage_rate_pct"
     )
 
     # >>> Mortgage calculation shown here (right after Mortgage inputs) <<<
@@ -77,7 +77,7 @@ with col_inputs:
     net_monthly_after_rent = mortgage_payment - monthly_rent
 
     st.info(
-        f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS  |  "
+        f"**Monthly Mortgage Payment:** {mortgage_payment:,.0f} ILS\n"
         f"**Net Monthly (payment − rent):** {net_monthly_after_rent:,.0f} ILS"
     )
 
@@ -91,11 +91,11 @@ with col_inputs:
     )
     monthly_deposit = st.number_input(
         "Monthly Deposit (ILS)",
-        min_value=0.0, value=7_000.0, step=100.0, format="%.0f", key="monthly_deposit"
+        min_value=0.0, value=6_000.0, step=100.0, format="%.0f", key="monthly_deposit"
     )
     stock_return_pct = st.number_input(
         "Annual Stock Market Return (%)",
-        min_value=0.0, value=6.50, step=0.10, format="%.2f", key="stock_return_pct"
+        min_value=0.0, value=7.00, step=0.10, format="%.2f", key="stock_return_pct"
     )
 
 # =========================
