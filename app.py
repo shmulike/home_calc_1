@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # -----------------------------
 # SETTINGS
 # -----------------------------
-graph_width = 4  # Change this to make the graph wider/narrower
+graph_width = 8  # Change this to make the graph wider/narrower
 
 st.set_page_config(page_title="Real Estate vs Investment Simulator", layout="wide")
 st.title("Real Estate & Investment Comparison Simulator")
@@ -85,7 +85,7 @@ for m in range(months + 1):
 # GRAPH
 # -----------------------------
 with col_graph:
-    fig, ax = plt.subplots(figsize=(graph_width, 6))
+    fig, ax = plt.subplots(figsize=(graph_width, 5))
 
     # Scenario 1
     ax.plot(np.array(total_assets_s1) / 1_000_000, label="Scenario 1: Total Assets", color="blue", linestyle="-")
