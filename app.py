@@ -114,8 +114,6 @@ for m in range(months + 1):
 debt = float(mortgage_amount)
 for m in range(months + 1):
     debt_series_s1[m] = max(0.0, debt)
-    if debt <= 0:
-        continue
     interest_part = debt * monthly_rate
     principal_part = mortgage_payment - interest_part
     principal_part = max(0.0, principal_part)
