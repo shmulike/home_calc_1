@@ -64,6 +64,13 @@ with col_inputs:
         min_value=0.0, value=4.00, step=0.10, format="%.2f", key="mortgage_rate_pct"
     )
 
+    
+    st.markdown("---")
+    st.markdown(f"**Mortgage Amount:** {mortgage_amount:,.0f} ILS")
+    st.markdown(f"**Monthly Mortgage Payment (no extra principal):** {mortgage_payment:,.0f} ILS")
+    st.markdown(f"**Net Monthly Payment after Rent (payment − rent):** {net_monthly_after_rent:,.0f} ILS")
+
+    
     # ---------------------
     # Stock Market
     # ---------------------
