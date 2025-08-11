@@ -85,7 +85,7 @@ for m in range(months + 1):
 # GRAPH
 # -----------------------------
 with col_graph:
-    fig, ax = plt.subplots(figsize=(graph_width, 4))
+    fig, ax = plt.subplots(figsize=(graph_width, 5))
 
     # Scenario 1
     ax.plot(np.array(total_assets_s1) / 1_000_000, label="Scenario 1: Total Assets", color="blue", linestyle="-")
