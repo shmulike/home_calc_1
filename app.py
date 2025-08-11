@@ -2,121 +2,171 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# -----------------------------
-# SETTINGS
-# -----------------------------
-graph_col_width = 8         # Controls ratio of graph column vs input column
-plot_width = 8              # Width of the matplotlib figure
-plot_height = 5             # Height of the matplotlib figure
-legend_fontsize = 6         # Font size for legend
-axis_label_fontsize = 8     # Font size for axis labels
-axis_tick_fontsize = 6      # Font size for axis tick values
+# =========================
+# DISPLAY / STYLE SETTINGS
+# =========================
+graph_col_width       = 7   # left column width (graph). Right column gets the rest (out of 10)
+plot_width            = 9   # matplotlib figure width
+plot_height           = 6   # matplotlib figure height
+legend_fontsize       = 11  # legend font size
+axis_label_fontsize   = 12  # axis labels & title font size
+axis_tick_fontsize    = 10  # axis tick numbers font size
 
-st.set_page_config(page_title="Real Estate vs Investment Simulator", layout="wide")
-st.title("Real Estate & Investment Comparison Simulator")
+st.set_page_config(page_title="Keep vs Sell: Apartment vs Stocks", layout="wide")
+st.title("Keep the Apartment & Pay Mortgage vs Sell and Invest")
 
-# -----------------------------
-# LAYOUT: Graph on left, controls on right
-# -----------------------------
+# =========================
+# LAYOUT: Graph (left) | Inputs (right)
+# =========================
 col_graph, col_inputs = st.columns([graph_col_width, 10 - graph_col_width])
 
 with col_inputs:
-    st.subheader("Property & Mortgage Parameters")
+    # ---------------------
+    # General
+    # ---------------------
+    st.header("General")
+    years_projection = st.number_input(
+        "Projection Years",
+        min_value=1, value=15, step=1, key="years_projection"
+    )
 
-    apt1_value = st.number_input("First Apartment Value (ILS)", min_value=0.0, value=1_900_000.0, step=1000.0, format="%.0f", key="apt1_value")
-    apt2_value = st.number_input("Second Apartment Value (ILS)", min_value=0.0, value=2_300_000.0, step=1000.0, format="%.0f", key="apt2_value")
-    mortgage_amount = st.number_input("Mortgage Amount (ILS)", min_value=0.0, value=1_700_000.0, step=1000.0, format="%.0f", key="mortgage_amount")
-    rent_monthly = st.number_input("Monthly Rent from Apt 1 (ILS)", min_value=0.0, value=4500.0, step=100.0, format="%.0f", key="rent_monthly")
-    mortgage_rate = st.number_input("Mortgage Annual Rate (%)", min_value=0.0, value=4.0, step=0.1, format="%.2f", key="mortgage_rate")
-    mortgage_years = st.number_input("Mortgage Years", min_value=1, value=25, step=1, key="mortgage_years")
+    # ---------------------
+    # Property Parameters
+    # ---------------------
+    st.header("Property Parameters")
+    apt_value = st.number_input(
+        "Apartment Value (ILS)",
+        min_value=0.0, value=1_900_000.0, step=10_000.0, format="%.0f", key="apt_value"
+    )
+    re_growth_pct = st.number_input(
+        "Annual Real Estate Growth (%)",
+        min_value=0.0, value=3.00, step=0.10, format="%.2f", key="re_growth_pct"
+    )
+    monthly_rent = st.number_input(
+        "Monthly Rent income (ILS)",
+        min_value=0.0, value=4_500.0, step=100.0, format="%.0f", key="monthly_rent"
+    )
 
-    st.subheader("Growth & Returns")
-    real_estate_growth = st.number_input("Annual Real Estate Growth (%)", min_value=0.0, value=3.0, step=0.1, format="%.2f", key="real_estate_growth")
-    stock_return = st.number_input("Annual Stock Market Return (%)", min_value=0.0, value=6.5, step=0.1, format="%.2f", key="stock_return")
+    # ---------------------
+    # Mortgage Parameters
+    # ---------------------
+    st.header("Mortgage Parameters")
+    mortgage_amount = st.number_input(
+        "Mortgage Amount (ILS)",
+        min_value=0.0, value=1_700_000.0, step=10_000.0, format="%.0f", key="mortgage_amount"
+    )
+    mortgage_years = st.number_input(
+        "Mortgage Years",
+        min_value=1, value=25, step=1, key="mortgage_years"
+    )
+    mortgage_rate_pct = st.number_input(
+        "Mortgage Annual Rate (%)",
+        min_value=0.0, value=4.00, step=0.10, format="%.2f", key="mortgage_rate_pct"
+    )
 
-    st.subheader("Investment Parameters for Scenario 2")
-    monthly_deposit = st.number_input("Monthly Stock Deposit (ILS)", min_value=0.0, value=7000.0, step=100.0, format="%.0f", key="monthly_deposit")
-    years_projection = st.number_input("Projection Years", min_value=1, value=15, step=1, key="years_projection")
+    # ---------------------
+    # Stock Market
+    # ---------------------
+    st.header("Stock Market")
+    initial_deposit = st.number_input(
+        "Initial deposit (ILS)",
+        min_value=0.0, value=200_000.0, step=10_000.0, format="%.0f", key="initial_deposit"
+    )
+    monthly_deposit = st.number_input(
+        "Monthly Deposit (ILS)",
+        min_value=0.0, value=7_000.0, step=100.0, format="%.0f", key="monthly_deposit"
+    )
+    stock_return_pct = st.number_input(
+        "Annual Stock Market Return (%)",
+        min_value=0.0, value=6.50, step=0.10, format="%.2f", key="stock_return_pct"
+    )
 
-# -----------------------------
+# =========================
 # CALCULATIONS
-# -----------------------------
-months = years_projection * 12
-monthly_rate = mortgage_rate / 100 / 12
-if mortgage_amount > 0 and mortgage_rate > 0:
-    mortgage_payment = mortgage_amount * (monthly_rate * (1 + monthly_rate) ** (mortgage_years * 12)) / ((1 + monthly_rate) ** (mortgage_years * 12) - 1)
+# =========================
+months = int(years_projection) * 12
+re_growth = re_growth_pct / 100.0
+stock_return = stock_return_pct / 100.0
+
+# Mortgage monthly payment (standard annuity)
+monthly_rate = (mortgage_rate_pct / 100.0) / 12.0
+n_pay = int(mortgage_years) * 12
+if mortgage_amount > 0 and monthly_rate > 0 and n_pay > 0:
+    mortgage_payment = mortgage_amount * (monthly_rate * (1 + monthly_rate) ** n_pay) / ((1 + monthly_rate) ** n_pay - 1)
+elif mortgage_amount > 0 and monthly_rate == 0 and n_pay > 0:
+    mortgage_payment = mortgage_amount / n_pay
 else:
-    mortgage_payment = 0
+    mortgage_payment = 0.0
 
-net_monthly_payment = mortgage_payment - rent_monthly
+net_monthly_after_rent = mortgage_payment - monthly_rent  # info only (doesn't change amortization)
 
-# Scenario 1
-apt1_values = []
-apt2_values_s1 = []
-total_assets_s1 = []
-mortgage_debt_s1 = []
+# --- Scenario 1: Keep apartment, rent, pay mortgage ---
+apt_series_s1 = np.zeros(months + 1)
+debt_series_s1 = np.zeros(months + 1)
 
-apt1_val = apt1_value
-apt2_val = apt2_value
-debt = mortgage_amount
-
+# apartment value growth
+apt_val = float(apt_value)
 for m in range(months + 1):
-    apt1_values.append(apt1_val)
-    apt2_values_s1.append(apt2_val)
-    total_assets_s1.append(apt1_val + apt2_val)
-    mortgage_debt_s1.append(debt)
-    apt1_val *= (1 + real_estate_growth / 100 / 12)
-    apt2_val *= (1 + real_estate_growth / 100 / 12)
-    interest_payment = debt * monthly_rate
-    principal_payment = mortgage_payment - interest_payment
-    debt = max(0, debt - principal_payment)
+    apt_series_s1[m] = apt_val
+    apt_val *= (1 + re_growth / 12.0)
 
-# Scenario 2
-apt2_values_s2 = []
-stock_values_s2 = []
-total_assets_s2 = []
-
-apt2_val_s2 = apt2_value
-stock_val = max(0, apt1_value - mortgage_amount)  # Initial difference from selling Apt 1
-
+# mortgage amortization (no extra principal by default)
+debt = float(mortgage_amount)
 for m in range(months + 1):
-    apt2_values_s2.append(apt2_val_s2)
-    stock_values_s2.append(stock_val)
-    total_assets_s2.append(apt2_val_s2 + stock_val)
-    apt2_val_s2 *= (1 + real_estate_growth / 100 / 12)
-    stock_val = stock_val * (1 + stock_return / 100 / 12) + monthly_deposit
+    debt_series_s1[m] = max(0.0, debt)
+    if debt <= 0:
+        continue
+    interest_part = debt * monthly_rate
+    principal_part = mortgage_payment - interest_part
+    principal_part = max(0.0, principal_part)
+    debt = max(0.0, debt - principal_part)
 
-# -----------------------------
-# GRAPH
-# -----------------------------
+# --- Scenario 2: Sell and invest in stock market (no apartment) ---
+equity_series_s2 = np.zeros(months + 1)
+amt = float(initial_deposit)
+equity_series_s2[0] = amt
+for m in range(1, months + 1):
+    amt = amt * (1 + stock_return / 12.0) + monthly_deposit
+    equity_series_s2[m] = amt
+
+years_axis = np.arange(months + 1) / 12.0
+
+# Shared Y max (in ILS)
+y_max = max(np.max(apt_series_s1), np.max(debt_series_s1), np.max(equity_series_s2))
+y_max = 1.05 * y_max if y_max > 0 else 1.0
+
+# =========================
+# PLOT
+# =========================
 with col_graph:
     fig, ax = plt.subplots(figsize=(plot_width, plot_height))
 
-    # Scenario 1
-    ax.plot(np.array(total_assets_s1) / 1_000_000, label="Scenario 1: Total Assets", color="blue", linestyle="-")
-    ax.plot(np.array(mortgage_debt_s1) / 1_000_000, label="Scenario 1: Mortgage Debt", color="blue", linestyle="--")
+    # Scenario 1 (Apartment & Debt)
+    ax.plot(years_axis, apt_series_s1 / 1_000_000.0, label="Scenario 1: Apartment Value", color="tab:blue", linestyle="-")
+    ax.plot(years_axis, debt_series_s1 / 1_000_000.0, label="Scenario 1: Mortgage Debt", color="tab:blue", linestyle="--")
 
-    # Scenario 2
-    ax.plot(np.array(apt2_values_s2) / 1_000_000, label="Scenario 2: Apt 2 Value", color="orange", linestyle="--")
-    ax.plot(np.array(stock_values_s2) / 1_000_000, label="Scenario 2: Stock Portfolio", color="orange", linestyle="-.")
-    ax.plot(np.array(total_assets_s2) / 1_000_000, label="Scenario 2: Total Assets", color="orange", linestyle="-")
+    # Scenario 2 (Equity Portfolio only)
+    ax.plot(years_axis, equity_series_s2 / 1_000_000.0, label="Scenario 2: Equity Portfolio", color="tab:orange", linestyle="-")
 
+    ax.set_title("Keep & Pay Mortgage vs Sell & Invest — Over Time", fontsize=axis_label_fontsize)
     ax.set_xlabel("Years", fontsize=axis_label_fontsize)
     ax.set_ylabel("Million ILS", fontsize=axis_label_fontsize)
-    ax.set_title("Comparison of Scenarios Over Time", fontsize=axis_label_fontsize)
-    ax.legend(fontsize=legend_fontsize)
+    ax.set_ylim(0, y_max / 1_000_000.0)
     ax.grid(True)
+    ax.legend(fontsize=legend_fontsize)
 
-    ax.set_xticks(range(0, months + 1, 12))
-    ax.set_xticklabels([str(i) for i in range(0, years_projection + 1)], fontsize=axis_tick_fontsize)
+    # Ticks (years)
+    ax.set_xticks(np.arange(0, months + 1, 12))
+    ax.set_xticklabels([str(y) for y in range(0, years_projection + 1)], fontsize=axis_tick_fontsize)
     ax.tick_params(axis='y', labelsize=axis_tick_fontsize)
 
-    st.pyplot(fig)
+    st.pyplot(fig, clear_figure=True)
 
-# -----------------------------
-# EXTRA INFO
-# -----------------------------
+# =========================
+# INFO BOXES (right)
+# =========================
 with col_inputs:
+    st.markdown("---")
     st.markdown(f"**Mortgage Amount:** {mortgage_amount:,.0f} ILS")
-    st.markdown(f"**Mortgage Monthly Payment:** {mortgage_payment:,.0f} ILS")
-    st.markdown(f"**Net Monthly Payment (after rent):** {net_monthly_payment:,.0f} ILS")
+    st.markdown(f"**Monthly Mortgage Payment (no extra principal):** {mortgage_payment:,.0f} ILS")
+    st.markdown(f"**Net Monthly Payment after Rent (payment − rent):** {net_monthly_after_rent:,.0f} ILS")
