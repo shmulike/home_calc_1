@@ -22,49 +22,70 @@ col_graph, col_inputs = st.columns([graph_col_width, 10 - graph_col_width])
 
 with col_inputs:
     # ---------------------
-    # General
+    # General (2-per-row; second column left as spacer)
     # ---------------------
     st.header("General")
-    years_projection = st.number_input(
-        "Projection Years",
-        min_value=1, value=20, step=1, key="years_projection"
-    )
-    years_projection = int(years_projection)  # // tweak: ensure int for ticks
+    g1, g2 = st.columns(2)
+    with g1:
+        years_projection = st.number_input(
+            "Projection Years",
+            min_value=1, value=20, step=1, key="years_projection"
+        )
+    with g2:
+        st.empty()  # spacer to keep two-per-row layout
+
+    years_projection = int(years_projection)
 
     # ---------------------
     # Property Parameters
     # ---------------------
     st.header("Property Parameters")
-    apt_value = st.number_input(
-        "Apartment Value (ILS)",
-        min_value=0.0, value=1_900_000.0, step=10_000.0, format="%.0f", key="apt_value"
-    )
-    re_growth_pct = st.number_input(
-        "Annual Real Estate Growth (%)",
-        min_value=0.0, value=3.00, step=0.10, format="%.2f", key="re_growth_pct"
-    )
-    monthly_rent = st.number_input(
-        "Monthly Rent income (ILS)",
-        min_value=0.0, value=4_000.0, step=100.0, format="%.0f", key="monthly_rent"
-    )
+    p1, p2 = st.columns(2)
+    with p1:
+        apt_value = st.number_input(
+            "Apartment Value (ILS)",
+            min_value=0.0, value=1_900_000.0, step=10_000.0, format="%.0f", key="apt_value"
+        )
+    with p2:
+        re_growth_pct = st.number_input(
+            "Annual Real Estate Growth (%)",
+            min_value=0.0, value=3.00, step=0.10, format="%.2f", key="re_growth_pct"
+        )
+
+    p3, p4 = st.columns(2)
+    with p3:
+        monthly_rent = st.number_input(
+            "Monthly Rent income (ILS)",
+            min_value=0.0, value=4_000.0, step=100.0, format="%.0f", key="monthly_rent"
+        )
+    with p4:
+        st.empty()  # spacer
 
     # ---------------------
     # Mortgage Parameters
     # ---------------------
     st.header("Mortgage Parameters")
-    mortgage_amount = st.number_input(
-        "Mortgage Amount (ILS)",
-        min_value=0.0, value=1_700_000.0, step=10_000.0, format="%.0f", key="mortgage_amount"
-    )
-    mortgage_years = st.number_input(
-        "Mortgage Years",
-        min_value=1, value=15, step=1, key="mortgage_years"
-    )
-    mortgage_years = int(mortgage_years)  # // tweak: ensure int
-    mortgage_rate_pct = st.number_input(
-        "Mortgage Annual Rate (%)",
-        min_value=0.0, value=5.50, step=0.10, format="%.2f", key="mortgage_rate_pct"
-    )
+    m1, m2 = st.columns(2)
+    with m1:
+        mortgage_amount = st.number_input(
+            "Mortgage Amount (ILS)",
+            min_value=0.0, value=1_700_000.0, step=10_000.0, format="%.0f", key="mortgage_amount"
+        )
+    with m2:
+        mortgage_years = st.number_input(
+            "Mortgage Years",
+            min_value=1, value=15, step=1, key="mortgage_years"
+        )
+    mortgage_years = int(mortgage_years)
+
+    m3, m4 = st.columns(2)
+    with m3:
+        mortgage_rate_pct = st.number_input(
+            "Mortgage Annual Rate (%)",
+            min_value=0.0, value=5.50, step=0.10, format="%.2f", key="mortgage_rate_pct"
+        )
+    with m4:
+        st.empty()  # spacer
 
     # >>> Mortgage calculation shown here (right after Mortgage inputs) <<<
     n_pay = mortgage_years * 12
@@ -88,18 +109,26 @@ with col_inputs:
     # Stock Market
     # ---------------------
     st.header("Stock Market")
-    initial_deposit = st.number_input(
-        "Initial deposit (ILS)",
-        min_value=0.0, value=200_000.0, step=10_000.0, format="%.0f", key="initial_deposit"
-    )
-    monthly_deposit = st.number_input(
-        "Monthly Deposit (ILS)",
-        min_value=0.0, value=6_000.0, step=100.0, format="%.0f", key="monthly_deposit"
-    )
-    stock_return_pct = st.number_input(
-        "Annual Stock Market Return (%)",
-        min_value=0.0, value=7.00, step=0.10, format="%.2f", key="stock_return_pct"
-    )
+    s1, s2 = st.columns(2)
+    with s1:
+        initial_deposit = st.number_input(
+            "Initial deposit (ILS)",
+            min_value=0.0, value=200_000.0, step=10_000.0, format="%.0f", key="initial_deposit"
+        )
+    with s2:
+        monthly_deposit = st.number_input(
+            "Monthly Deposit (ILS)",
+            min_value=0.0, value=6_000.0, step=100.0, format="%.0f", key="monthly_deposit"
+        )
+
+    s3, s4 = st.columns(2)
+    with s3:
+        stock_return_pct = st.number_input(
+            "Annual Stock Market Return (%)",
+            min_value=0.0, value=7.00, step=0.10, format="%.2f", key="stock_return_pct"
+        )
+    with s4:
+        st.empty()  # spacer
 
 # =========================
 # CALCULATIONS (vectorized so the lines always span full horizon)
@@ -124,7 +153,7 @@ def mortgage_balance_series(P, annual_rate_pct, years_term, months_horizon):
     if P <= 0 or n <= 0:
         return np.zeros_like(k, dtype=float)
 
-    m = np.minimum(k, n)  # // tweak: reuse min(k, n)
+    m = np.minimum(k, n)
     if r == 0:
         # Linear paydown to zero by month n, then stay at 0
         B = P * (1 - m / n)
