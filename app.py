@@ -5,7 +5,12 @@ import matplotlib.pyplot as plt
 # -----------------------------
 # SETTINGS
 # -----------------------------
-graph_width = 8  # Change this to make the graph wider/narrower
+graph_col_width = 8         # Controls ratio of graph column vs input column
+plot_width = 8              # Width of the matplotlib figure
+plot_height = 6             # Height of the matplotlib figure
+legend_fontsize = 10        # Font size for legend
+axis_label_fontsize = 12    # Font size for axis labels
+axis_tick_fontsize = 10     # Font size for axis tick values
 
 st.set_page_config(page_title="Real Estate vs Investment Simulator", layout="wide")
 st.title("Real Estate & Investment Comparison Simulator")
@@ -13,7 +18,7 @@ st.title("Real Estate & Investment Comparison Simulator")
 # -----------------------------
 # LAYOUT: Graph on left, controls on right
 # -----------------------------
-col_graph, col_inputs = st.columns([graph_width, 10 - graph_width])
+col_graph, col_inputs = st.columns([graph_col_width, 10 - graph_col_width])
 
 with col_inputs:
     st.subheader("Property & Mortgage Parameters")
@@ -85,7 +90,7 @@ for m in range(months + 1):
 # GRAPH
 # -----------------------------
 with col_graph:
-    fig, ax = plt.subplots(figsize=(graph_width, 5))
+    fig, ax = plt.subplots(figsize=(plot_width, plot_height))
 
     # Scenario 1
     ax.plot(np.array(total_assets_s1) / 1_000_000, label="Scenario 1: Total Assets", color="blue", linestyle="-")
@@ -96,14 +101,15 @@ with col_graph:
     ax.plot(np.array(stock_values_s2) / 1_000_000, label="Scenario 2: Stock Portfolio", color="orange", linestyle="-.")
     ax.plot(np.array(total_assets_s2) / 1_000_000, label="Scenario 2: Total Assets", color="orange", linestyle="-")
 
-    ax.set_xlabel("Years")
-    ax.set_ylabel("Million ILS")
-    ax.set_title("Comparison of Scenarios Over Time")
-    ax.legend()
+    ax.set_xlabel("Years", fontsize=axis_label_fontsize)
+    ax.set_ylabel("Million ILS", fontsize=axis_label_fontsize)
+    ax.set_title("Comparison of Scenarios Over Time", fontsize=axis_label_fontsize)
+    ax.legend(fontsize=legend_fontsize)
     ax.grid(True)
 
     ax.set_xticks(range(0, months + 1, 12))
-    ax.set_xticklabels([str(i) for i in range(0, years_projection + 1)])
+    ax.set_xticklabels([str(i) for i in range(0, years_projection + 1)], fontsize=axis_tick_fontsize)
+    ax.tick_params(axis='y', labelsize=axis_tick_fontsize)
 
     st.pyplot(fig)
 
